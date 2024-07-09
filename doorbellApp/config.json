@@ -1,0 +1,9 @@
+{
+	"deviceName": "KSHomeDoorbell",
+	"ssid": "subhSpec",
+	"pass": "pawan@158",
+	"cloudAdd" : "192.168.0.249",
+	"cloudPort": "1234",
+	"mqttServer": "192.168.0.218",
+	"mqttPort": "1883"
+}
