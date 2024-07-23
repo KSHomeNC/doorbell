@@ -17,6 +17,7 @@
 #include "kshomeConfig.h"
 #include "liveCamera.h"
 #include "bellButton.h"
+#include "consoleNet.h"
 
 #define CHANNEL 0
 #define CHANNELMD  3  // RGB format video for motion detection only avaliable on channel 3
@@ -51,6 +52,7 @@ int motionCount = 0;
 int silenceTimeSec = 1000; // devide by of 10 mSec  1000 is 10Sec
 int timelapseSec = silenceTimeSec;
 
+bool isConsolNetStarted = false;
 
 char clientId[]       = "amebaClient";
 char publishTopic[]   = "objMotion";
@@ -66,6 +68,8 @@ extern int LIVECAMERA_PORT;
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
+
+consolNet consolnet;
 
 void motionDetection(void);
 void saveImageonSDCard(void);
@@ -183,6 +187,17 @@ void setup() {
       delay(500);
       Serial.print(".");
   }
+  // print your WiFi IP address:
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+
+  // print the received signal strength:
+  long rssi = WiFi.RSSI();
+  Serial.print("signal strength (RSSI):");
+  Serial.print(rssi);
+  Serial.println(" dBm");
+
   ipAdd.ip = WiFi.localIP();
   timeClient.begin();
 
@@ -198,18 +213,31 @@ void setup() {
   delay(2000);
   mqttInit();
   digitalWrite(GREEN_LED, false);
+
+  if (consolnet.consolNetInit())
+  {
+    Serial.println("ConsoleNet Started");
+    isConsolNetStarted = true;
+  }
+  else{
+    Serial.println("ConsoleNet failed to Started");
+  }
   
 }
 
-
 int cnt =0;
 void loop() {
+
     checkSerialCommand();
-    motionDetection();
-    handleLiveCamera();
+
+    //motionDetection();
+    //handleLiveCamera();
     if(isButtonPressed())
     {
       sendMsg(1);
+    }
+    if(isConsolNetStarted == true){
+      consolnet.consolNetHandler();
     }
     //mqttTask();
     /*
@@ -315,3 +343,4 @@ void motionDetection(void)
     }   
 
 }
+

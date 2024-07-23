@@ -1,4 +1,3 @@
-
 #ifndef __KSHOME_CONF_H__
 #define __KSHOME_CONF_H__
 
@@ -18,6 +17,7 @@ typedef struct{
   int cloudPort;
   char mqttServer[32];
   int mqttPort;  
+  bool isMotionDetactionEnable;
 }App_Conf;
 
 //read config from local struct
@@ -30,4 +30,6 @@ int loadConfig();
 int storeConfig();
 //print the configuration structure
 void printConf();
+// get confile contain in Json object
+int getConfFile( char* buffer, int length);
 #endif //__KSHOME_CONF_H__

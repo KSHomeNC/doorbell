@@ -2,7 +2,7 @@
 #include "LOGUARTClass.h"
 #include "AmebaFatFS.h"
 //#include "setDateNTime.h"
-#include "cloudService.h"
+//#include "cloudService.h"
 #include <arduino.h>
 #include "commandHandler.h"
 //#include "kshomeConfig.h"

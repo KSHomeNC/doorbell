@@ -7,6 +7,28 @@ extern AmebaFatFS fs;
 JsonDocument doc;
 App_Conf devConf;
 
+int getConfFile( char* buffer, int length){
+  char path[128]; 
+  int  len = 0;
+  
+  //printf("conf File \"%s\"  \r\n", confFilename);
+  sprintf(path, "%s%s", fs.getRootPath(), confFilename);
+  File file = fs.open(path);
+  //Serial.println(file);
+  if(file){ 
+    if( file.size() > length)
+    {
+      Serial.println("buffer size is shorter");
+      return 0;
+    }
+
+    len = file.readBytes(buffer,length);
+    
+  }//file
+  file.close();   
+  return len;    
+}
+
 int loadConfig()
 {
   char path[128]; 
@@ -31,20 +53,20 @@ int loadConfig()
         strlcpy(devConf.cloudAdd, doc["cloudAdd"],sizeof(devConf.cloudAdd));    
         devConf.cloudPort = doc["cloudPort"];
         strlcpy(devConf.mqttServer, doc["mqttServer"],sizeof(devConf.mqttServer));    
-        devConf.mqttPort = doc["mqttPort"];         
+        devConf.mqttPort = doc["mqttPort"];
+        devConf.isMotionDetactionEnable = doc["isMotionDetactionEnable"];         
         retVal = 0;
       }      
     //}//len      
   }//file
-  file.close(); 
-  
+  file.close();   
   return retVal;    
-
 }
-App_Conf* getConfig(){
-  
+
+App_Conf* getConfig(){  
   return &devConf;    
 }
+
 int setConfig(App_Conf *conf)
 {  
   strlcpy((char*)&devConf , (const char *) conf, sizeof(devConf));  
@@ -65,6 +87,8 @@ int storeConfig(){
   doc["cloudPort"] = devConf.cloudPort;
   doc["mqttServer"] = devConf.mqttServer;    
   doc["mqttPort"] = devConf.mqttPort;
+  doc["isMotionDetactionEnable"] = devConf.isMotionDetactionEnable;
+  
     
   printf("conf File \"%s\"  \r\n", confFilename);
   sprintf(path, "%s%s", fs.getRootPath(), confFilename);
@@ -112,5 +136,8 @@ void printConf()
 
   Serial.print("mqtt port = ");
   Serial.println(devConf.mqttPort);
+
+  Serial.print("isMotionDetactionEnable = ");
+  Serial.println(devConf.isMotionDetactionEnable);
 }
 

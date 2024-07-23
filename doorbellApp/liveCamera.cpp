@@ -3,7 +3,9 @@
 #include "liveCamera.h"
 #include "WiFi.h"
 #include "videoStream.h"
-
+#include "AudioStream.h"
+#include "AudioEncoder.h"
+#include "StreamIO.h"
 
 #define CHANNEL 1
 int LIVECAMERA_PORT = 80;
@@ -12,6 +14,12 @@ int LIVECAMERA_PORT = 80;
 VideoSetting configLive(1024, 576, CAM_FPS, VIDEO_JPEG, 1); //1024
 WiFiServer server(LIVECAMERA_PORT,TCP_MODE, NON_BLOCKING_MODE);
 //WiFiServer server(LIVECAMERA_PORT);
+AudioSetting AudioConfig(0);
+Audio audio;
+AAC aac;
+
+StreamIO audioStreamer(1,1);// audio input =>> Encoder output
+StreamIO audioVidepMixer(2,1);// 1 encoder output & Video ouput
 
 uint32_t liveimg_addr = 0;
 uint32_t liveimg_len = 0;
@@ -40,6 +48,22 @@ int initLiveCamera()
 {
   Camera.configVideoChannel(CHANNEL, configLive);
   Camera.videoInit();
+  
+  audio.configAudio(AudioConfig);
+  audio.begin();
+
+  aac.configAudio(AudioConfig);
+  aac.begin();
+
+  audioStreamer.registerInput(audio);
+  audioStreamer.registerOutput(aac);
+  if(audioStreamer.begin()!=0){
+    Serial.println("Audio Streamer link failed");
+  }
+
+
+
+
   Camera.channelBegin(CHANNEL);
 
   server.begin();
@@ -56,12 +80,13 @@ void handleLiveCamera()
 
     if (client) {       
         while (client.connected()) {
-          Serial.println("new client connected");
+          //Serial.println("new client connected");
           String currentLine = "";
           if (client.available()) {
               char c = client.read();
               Serial.write(c);
               if (c == '\n') {
+                Serial.println(" live streaming started");
                   if (currentLine.length() == 0) {
                       sendHeader(client);
                       while (client.connected()) {
