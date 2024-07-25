@@ -33,7 +33,7 @@ char filename[32] = "";
 
 WiFiUDP ntpUDP;
 
-WIFiAddress ipAdd;
+IPAddress ipAdd;
 // You can specify the time server pool and the offset (in seconds, can be
 // changed later with setTimeOffset() ). Additionaly you can specify the
 // update interval (in milliseconds, can be changed using setUpdateInterval() ).
@@ -70,6 +70,7 @@ WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 
 consolNet consolnet;
+deviceConfigurationMgmt confiMgmt;
 
 void motionDetection(void);
 void saveImageonSDCard(void);
@@ -99,12 +100,14 @@ void sendMsg(int msgType){
     char payLoad[64];
     if(msgType == 0 )// motion detected
     {
-      sprintf(payLoad,"%s%s%s%s%d",publishPayload,"http://",ipAdd.ip.get_address(),":", LIVECAMERA_PORT);
+      //sprintf(payLoad,"%s%s%s%s%d",publishPayload,"http://",ipAdd.ip.get_address(),":", LIVECAMERA_PORT);
+      sprintf(payLoad,"%s%s%s%s%d",publishPayload,"http://",ipAdd,":", LIVECAMERA_PORT);
       topic = "objMotion";
     }
     else
     {
-      sprintf(payLoad,"%s%s%s%s%d",pubtButton,"http://",ipAdd.ip.get_address(),":", LIVECAMERA_PORT);
+      //sprintf(payLoad,"%s%s%s%s%d",pubtButton,"http://",ipAdd.ip.get_address(),":", LIVECAMERA_PORT);
+      sprintf(payLoad,"%s%s%s%s%d",pubtButton,"http://",ipAdd,":", LIVECAMERA_PORT);
       topic = "button";
     }
     
@@ -177,10 +180,10 @@ void setup() {
   fs.begin();
   delay(1000);
   // load the device configuration
-  loadConfig();
+  confiMgmt.loadConfig();
   //read the device configuration
-  conf= getConfig();
-  printConf();
+  conf= confiMgmt.getConfig();
+  confiMgmt.printConf();
 
   WiFi.begin(conf->ssid, conf->pass);
   while (WiFi.status() != WL_CONNECTED) {
@@ -191,6 +194,7 @@ void setup() {
   IPAddress ip = WiFi.localIP();
   Serial.print("IP Address: ");
   Serial.println(ip);
+  confiMgmt.devIdObject.setDeviceIP(ip);
 
   // print the received signal strength:
   long rssi = WiFi.RSSI();
@@ -198,19 +202,20 @@ void setup() {
   Serial.print(rssi);
   Serial.println(" dBm");
 
-  ipAdd.ip = WiFi.localIP();
+  ipAdd = WiFi.localIP();
   timeClient.begin();
+  
 
   doorbellCameraInit();
 
   initLiveCamera();
 
   Serial.println("Camera started!");
-  delay(2000);
+  delay(500);
 
   initButton();
   Serial.println("BUtton started!");
-  delay(2000);
+  delay(500);
   mqttInit();
   digitalWrite(GREEN_LED, false);
 

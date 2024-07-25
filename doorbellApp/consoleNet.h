@@ -4,11 +4,12 @@
 
 #include <WiFiUdp.h>
 #include "IPAddress.h"
+//#include "kshomeConfig.h"
 
 typedef enum{
   CMD_Discover_Req=0,
   CMD_Discover_Res,
-  CMD_Discover_ReqAck,
+  CMD_Discover_ResAck,
   CMD_Reboot_Req,
   CMD_Reboot_Ack,
   CMD_Get_Conf_Req,
@@ -45,7 +46,8 @@ class consolNet{
   uint16_t rxCmd;
   uint16_t rxDataLen;
   IPAddress remoteIP;
-  uint16_t remotePort;  
+  uint16_t remotePort; 
+  uint16_t discoverSeqID; 
   char buff[MAX_RX_TX_BUFF_LEN];
   
   uint16_t decodeHeader( void);

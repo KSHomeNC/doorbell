@@ -7,6 +7,7 @@
 
 
 extern AmebaFatFS fs;
+extern deviceConfigurationMgmt confiMgmt;
 
 int consolNet:: consolNetInit()
 {
@@ -22,8 +23,9 @@ int consolNet:: handleRebootCmd(void){
 }
 int consolNet:: handleGetConfCmd(void){
   Serial.println("Get conf command received");
-  
-  int len = getConfFile(&buff[4], 508);
+  memset(buff, 0, MAX_RX_TX_BUFF_LEN);
+
+  int len = confiMgmt.getConfFile(&buff[4], 508);
   encodeHeader(CMD_Get_Conf_Res, len);
   //append header to the buffer
   memcpy(buff, (const void*) &txHeader, sizeof(PROTOCOL_HEADER));
@@ -35,11 +37,55 @@ int consolNet:: handleSetConfCmd(void){
   Serial.println("set Conf command received");
   return 0;
 }
+// data Frame 2 byte for sequnce ID
 int consolNet:: handleDiscoverReq(void){
+  int retCode = -1;
   Serial.println("Discover req command received");
-  return 0;
+  if( rxDataLen == 2 ){
+    Serial.print("Next data received : ");
+    Serial.println(udpServer.read(buff, 2));
 
+    uint16_t rxSeq =  ( (buff[0] << 8) | buff[1]);
+    //if( rxSeq != discoverSeqID){
+      discoverSeqID = rxSeq;
+      memset(buff, 0, MAX_RX_TX_BUFF_LEN);
+      DEVICE_IDENTIFICATION *devIdObj = confiMgmt.devIdObject.getDeviceIdentificationObject();
+      //IP Address, DeviceName, deviceCode
+      //1 byte len IP add 4 byte
+      uint16_t startIndex = sizeof(PROTOCOL_HEADER);
+      buff[startIndex++] =04;
+      buff[startIndex++] = devIdObj->ip[3];
+      buff[startIndex++] = devIdObj->ip[2];
+      buff[startIndex++] = devIdObj->ip[1];
+      buff[startIndex++] = devIdObj->ip[0];
+      //1 byte DevicName len
+      uint8_t len = strlen(devIdObj->deviceName);
+      buff[startIndex++] = len;
+      memcpy((void*) &buff[startIndex], (const void *) devIdObj->deviceName , len);
+      startIndex+=len;
+
+      len = strlen(devIdObj->deviceCode);
+      buff[startIndex++] = len;
+      memcpy((void*) &buff[startIndex], (const void *) devIdObj->deviceCode , len);
+      startIndex+=len;
+
+      encodeHeader(CMD_Discover_Res, startIndex);
+
+      sendResponse(startIndex + sizeof(PROTOCOL_HEADER));
+
+      retCode = 0;
+   // }
+   // else{
+   //   Serial.print("received Seq : ");
+   //   Serial.println(rxSeq);
+   //   Serial.print("available Seq : ");
+   //   Serial.println(discoverSeqID);
+   //   Serial.println("Duplicate discover request");
+    //}
+  }
+  return retCode;
 }
+
 int consolNet:: handleDiscoverResAck(void){
   Serial.println("Discover resAck command received");
   return 0;
@@ -120,7 +166,7 @@ void consolNet:: consolNetHandler(void)
       case CMD_Discover_Req:
         handleDiscoverReq();
       break;
-      case CMD_Discover_Res:
+      case CMD_Discover_ResAck:
         handleDiscoverResAck();
       break;
       case CMD_Reboot_Req:

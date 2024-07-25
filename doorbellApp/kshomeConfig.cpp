@@ -5,9 +5,9 @@
 #include <ArduinoJson.h>
 extern AmebaFatFS fs;
 JsonDocument doc;
-App_Conf devConf;
 
-int getConfFile( char* buffer, int length){
+
+int deviceConfigurationMgmt::getConfFile( char* buffer, int length){
   char path[128]; 
   int  len = 0;
   
@@ -29,7 +29,7 @@ int getConfFile( char* buffer, int length){
   return len;    
 }
 
-int loadConfig()
+int deviceConfigurationMgmt::loadConfig()
 {
   char path[128]; 
   int retVal = -1;
@@ -47,6 +47,7 @@ int loadConfig()
       else{
         printf("conf File \"%s\"   loaded successful\r\n" , confFilename);
         strlcpy(devConf.dName, doc["deviceName"],sizeof(devConf.dName));
+        strlcpy(devConf.dCode, doc["deviceCode"],sizeof(devConf.dCode));
         strlcpy(devConf.ssid, doc["ssid"],sizeof(devConf.ssid));
 
         strlcpy(devConf.pass, doc["pass"],sizeof(devConf.pass));
@@ -54,7 +55,9 @@ int loadConfig()
         devConf.cloudPort = doc["cloudPort"];
         strlcpy(devConf.mqttServer, doc["mqttServer"],sizeof(devConf.mqttServer));    
         devConf.mqttPort = doc["mqttPort"];
-        devConf.isMotionDetactionEnable = doc["isMotionDetactionEnable"];         
+        devConf.isMotionDetactionEnable = doc["isMotionDetactionEnable"];  
+        devIdObject.setDeviceName(devConf.dName);
+        devIdObject.setDeviceCode(devConf.dCode);       
         retVal = 0;
       }      
     //}//len      
@@ -63,17 +66,17 @@ int loadConfig()
   return retVal;    
 }
 
-App_Conf* getConfig(){  
+App_Conf* deviceConfigurationMgmt::getConfig(){  
   return &devConf;    
 }
 
-int setConfig(App_Conf *conf)
+int deviceConfigurationMgmt::setConfig(App_Conf *conf)
 {  
   strlcpy((char*)&devConf , (const char *) conf, sizeof(devConf));  
   return 0;
 }
 
-int storeConfig(){
+int deviceConfigurationMgmt::storeConfig(){
 
   int retVal = -1;
   char path[128]; 
@@ -81,6 +84,7 @@ int storeConfig(){
   JsonDocument doc;
 
   doc["deviceName"] = devConf.dName;
+  doc["deviceCode"] = devConf.dCode;
   doc["ssid"] = devConf.ssid;
   doc["pass"] = devConf.pass;
   doc["cloudAdd"] = devConf.cloudAdd;    
@@ -112,7 +116,7 @@ int storeConfig(){
   return retVal;
 }
 
-void printConf()
+void deviceConfigurationMgmt::printConf()
 {
   Serial.println("Conf read ===>>");
   
